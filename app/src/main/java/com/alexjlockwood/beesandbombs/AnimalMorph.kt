@@ -12,11 +12,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.vector.Path
 import androidx.compose.ui.graphics.vector.PathNode
 import androidx.compose.ui.graphics.vector.PathNode.MoveTo
 import androidx.compose.ui.graphics.vector.VectorPainter
 import androidx.compose.ui.graphics.vector.addPathNodes
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 
@@ -31,22 +33,34 @@ fun AnimalMorph(modifier: Modifier = Modifier) {
             targetValue = 1f,
             anim = repeatable(
                 iterations = AnimationConstants.Infinite,
-                animation = tween(durationMillis = 2500, easing = LinearEasing),
+                animation = tween(durationMillis = 3000, easing = LinearEasing),
             ),
         )
     }
 
-    val hippoColor = Color(0xFF78909C)
-    val elephantColor = Color(0xFFBDBDBD)
-    val buffaloColor = Color(0xFF795548)
+    val animalColors = listOf(
+        colorResource(R.color.hippo),
+        colorResource(R.color.elephant),
+        colorResource(R.color.buffalo),
+    )
 
     val hippoPathData = stringResource(R.string.hippo)
     val elephantPathData = stringResource(R.string.elephant)
     val buffaloPathData = stringResource(R.string.buffalo)
+    val animalPathNodes = remember {
+        listOf(
+            addPathNodes(hippoPathData),
+            addPathNodes(elephantPathData),
+            addPathNodes(buffaloPathData),
+        )
+    }
 
-    val hippoPathNodes = remember { addPathNodes(hippoPathData) }
-    val elephantPathNodes = remember { addPathNodes(elephantPathData) }
-    val buffaloPathNodes = remember { addPathNodes(buffaloPathData) }
+    val t = animatedProgress.value
+    val startIndex = (t * 3).toInt()
+    val endIndex = (startIndex + 1) % animalPathNodes.size
+    val tt = t * 3 - (if (t < 1f / 3f) 0 else if (t < 2f / 3f) 1 else 2)
+    val color = lerp(animalColors[startIndex], animalColors[endIndex], ease(tt, 3f))
+    val pathNodes = lerp(animalPathNodes[startIndex], animalPathNodes[endIndex], ease(tt, 3f))
 
     Image(
         painter = VectorPainter(
@@ -54,10 +68,16 @@ fun AnimalMorph(modifier: Modifier = Modifier) {
             defaultHeight = 280.6.dp,
             viewportWidth = 409.6f,
             viewportHeight = 280.6f,
-        ) { _, _ ->
+        ) { vw, vh ->
+            // Draw a white background rect.
             Path(
-                pathData = lerp(hippoPathNodes, elephantPathNodes, animatedProgress.value),
-                fill = SolidColor(hippoColor),
+                pathData = remember { addPathNodes("h $vw v $vh h -$vw v -$vh") },
+                fill = SolidColor(Color.White),
+            )
+            // Draw the morphed animal path.
+            Path(
+                pathData = pathNodes,
+                fill = SolidColor(color),
             )
         },
         modifier = modifier,
@@ -73,7 +93,7 @@ private fun lerp(a: List<PathNode>, b: List<PathNode>, t: Float): List<PathNode>
                 lerp(first.y, second.y, t),
             )
         } else if (first is PathNode.CurveTo && second is PathNode.CurveTo) {
-            val curveTo = PathNode.CurveTo(
+            PathNode.CurveTo(
                 lerp(first.x1, second.x1, t),
                 lerp(first.y1, second.y1, t),
                 lerp(first.x2, second.x2, t),
@@ -81,7 +101,6 @@ private fun lerp(a: List<PathNode>, b: List<PathNode>, t: Float): List<PathNode>
                 lerp(first.x3, second.x3, t),
                 lerp(first.y3, second.y3, t),
             )
-            curveTo
         } else {
             throw IllegalStateException("Unsupported SVG PathNode command")
         }

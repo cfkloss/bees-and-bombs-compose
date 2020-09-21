@@ -21,12 +21,14 @@ class MainActivity : AppCompatActivity() {
                 // TODO: implement a screen-based navigation system (for now just uncomment the animation you want to show)
                 //AnimalMorph(modifier)
                 //CircleSquare(modifier)
+                //CircleWave(modifier)
                 //CircularProgressIndicator(modifier)
                 //PlayingWithPaths(modifier)
                 //RingOfCircles(modifier)
-                RotatingGlobe(modifier)
-                //SquareTwist(modifier)
+                //RotatingGlobe(modifier)
+                SquareTwist(modifier)
                 //TickerWave(modifier)
+                //WaveSpiral(modifier)
                 //WaveSquare(modifier)
             }
         }
